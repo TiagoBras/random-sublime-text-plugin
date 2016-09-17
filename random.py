@@ -16,6 +16,8 @@ def get_settings():
 Base class for the Random generator. Extends the WindowCommand and adds helper methods
 """
 class RandomWindow(sublime_plugin.WindowCommand):
+    def default_choice(self):
+        return 'a,b'
 
     def default_range(self):
         """
@@ -37,6 +39,15 @@ class RandomWindow(sublime_plugin.WindowCommand):
         except Exception as e:
             logging.exception(e)
             sublime.error_message('Must be two comma separated integers')
+
+    def get_choices(self, input_text):
+        try:
+            words = [s.strip() for s in input_text.split(',')]
+
+            self.insert({'words': words})
+        except Exception as e:
+            logging.exception(e)
+            sublime.error_message('Must be comma separated words')
 
     def insert(self, kwargs):
         view = self.window.active_view()
@@ -85,6 +96,11 @@ class RandomFloatWindowCommand(RandomWindow):
         self.text_command = 'random_float'
         self.window.show_input_panel('Random float from-to',self.default_range(), self.get_range, None, None)
 
+class RandomChoiceWindowCommand(RandomWindow):
+    def run(self):
+        self.text_command = 'random_choice'
+        self.window.show_input_panel('Random choice', self.default_choice(), self.get_choices, None, None)
+
 """
 END Window commands
 """
@@ -92,6 +108,15 @@ END Window commands
 """
 Text commands
 """
+class RandomChoiceCommand(RandomText):
+    def choose(self):
+        output = r.choice(self.words)
+        return str(output)
+
+    def run(self, view, **kwargs):
+        self.words = kwargs['words']
+        self.insert(view, self.choose)
+
 class RandomIntCommand(RandomText):
     def generate_int(self):
         output = r.randint(self.start, self.stop)
